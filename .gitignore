@@ -1,0 +1,38 @@
+# Java/Spring Boot
+target/
+*.jar
+*.war
+*.ear
+*.class
+
+# Maven
+.mvn/
+
+# Gradle (if used)
+.gradle/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Logs
+logs/
+*.log
+
+# React/Redux
+node_modules/
+build/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.swp

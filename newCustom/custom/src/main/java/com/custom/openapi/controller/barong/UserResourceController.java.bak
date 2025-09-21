@@ -1,0 +1,110 @@
+package com.custom.openapi.controller.barong;
+
+import com.custom.marketdata.entity.User;
+import com.custom.marketdata.manager.UserManager;
+import com.custom.openapi.model.barong.*;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+
+@RestController
+@RequestMapping("/v2/barong/resource")
+@RequiredArgsConstructor
+public class UserResourceController {
+    
+    private final UserManager userManager;
+    
+    /**
+     * GET /v2/barong/resource/users/me - Get current user information
+     */
+    @GetMapping("/users/me")
+    public ResponseEntity<AuthenticationResponse> getCurrentUser(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        
+        try {
+            // Extract token from Authorization header
+            String accessToken = extractTokenFromAuth(authorization);
+            if (accessToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            User user = userManager.getUserByAccessToken(accessToken);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            AuthenticationResponse response = convertToAuthenticationResponse(user);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    /**
+     * PUT /v2/barong/resource/users/password - Change password
+     */
+    @PutMapping("/users/password")
+    public ResponseEntity<Void> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+        
+        try {
+            String accessToken = extractTokenFromAuth(authorization);
+            if (accessToken == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            User user = userManager.getUserByAccessToken(accessToken);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            
+            // Validate password confirmation
+            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+                return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+            }
+            
+            // TODO: Implement password change using existing UserManager logic
+            // 1. Validate old password
+            // 2. Hash new password
+            // 3. Update user
+            
+            return ResponseEntity.ok().build();
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    private String extractTokenFromAuth(String authorization) {
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            return authorization.substring(7);
+        }
+        return null;
+    }
+    
+    private AuthenticationResponse convertToAuthenticationResponse(User user) {
+        AuthenticationResponse response = new AuthenticationResponse();
+        response.setEmail(user.getEmail());
+        response.setUid(user.getUid());
+        response.setRole(user.getRole());
+        response.setLevel(user.getLevel());
+        response.setOtp(user.getOtpEnabled());
+        response.setState(user.getState());
+        response.setReferralUid(user.getReferralUid());
+        response.setData(user.getData() != null ? user.getData() : "{\"language\":\"" + user.getLanguage() + "\"}");
+        response.setCreatedAt(user.getCreatedAtLocal());
+        response.setUpdatedAt(user.getUpdatedAtLocal());
+        
+        // TODO: Load and set labels, phones, profiles
+        response.setLabels(java.util.Collections.emptyList());
+        response.setPhones(java.util.Collections.emptyList());
+        response.setProfiles(java.util.Collections.emptyList());
+        
+        return response;
+    }
+}
